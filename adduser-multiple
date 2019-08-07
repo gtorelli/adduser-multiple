@@ -1,0 +1,57 @@
+#!/bin/bash
+clear
+echo "##################################################"
+echo "        MULTIPLE NODES USERADD WITH SSHPASS"
+echo "		     v0.6-20.03.2019"
+echo "   Author: Gabriel Torelli | torelli@yahoo.com
+echo "##################################################"
+
+echo "Insert username and press [ENTER]:"
+read nome
+
+criaSenha()
+{
+echo "Insert password and press [ENTER]:"
+read -s senha
+echo "Confirm the password and press [ENTER]:"
+read -s senhaValidacao
+}
+
+criaSenha
+
+while [[ "$senha" != "$senhaValidacao" ]]; do
+echo "Password don't match! Please type again"
+criaSenha
+done
+
+echo "Creating new user"
+useradd -m $nome; echo "$nome:$senha" | chpasswd
+
+echo "Adding to samba share"
+echo -e "$senha\n$senha" | smbpasswd -s -a $nome
+
+echo "Creating SSH keys"
+su - $nome -c "ssh-keygen -t rsa -N \"\" -f ~/.ssh/id_rsa"
+
+echo "Install sshpass"
+yum install sshpass -y
+
+echo "Insert the admin password and press [ENTER]:"
+read -s senhaRoot
+
+sshpass -p $senhaRoot ssh -o StrictHostKeyChecking=no root@clustern1 "useradd -m $nome; echo "$nome:$senha" | chpasswd"
+sshpass -p $senhaRoot ssh -o StrictHostKeyChecking=no root@clustern2 "useradd -m $nome; echo "$nome:$senha" | chpasswd"
+sshpass -p $senhaRoot ssh -o StrictHostKeyChecking=no root@clustern3 "useradd -m $nome; echo "$nome:$senha" | chpasswd"
+sshpass -p $senhaRoot ssh -o StrictHostKeyChecking=no root@clustern4 "useradd -m $nome; echo "$nome:$senha" | chpasswd"
+
+echo "Sending ssh keys to machines"
+su - $nome -c "echo $senha >> ~/.passwd.txt"
+su - $nome -c "sshpass -f ~/.passwd.txt ssh-copy-id -i ~/.ssh/id_rsa.pub clusterh1"
+su - $nome -c "sshpass -f ~/.passwd.txt ssh-copy-id -i ~/.ssh/id_rsa.pub clustern1"
+su - $nome -c "sshpass -f ~/.passwd.txt ssh-copy-id -i ~/.ssh/id_rsa.pub clustern2"
+su - $nome -c "sshpass -f ~/.passwd.txt ssh-copy-id -i ~/.ssh/id_rsa.pub clustern3"
+su - $nome -c "sshpass -f ~/.passwd.txt ssh-copy-id -i ~/.ssh/id_rsa.pub clustern4"
+su - $nome -c "rm -rf ~/.passwd.txt"
+
+echo "Removing wallpaper"
+rm -rf /usr/share/backgrounds
