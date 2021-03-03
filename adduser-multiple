@@ -1,10 +1,10 @@
 #!/bin/bash
 clear
-echo "##################################################"
-echo "        MULTIPLE NODES USERADD WITH SSHPASS"
+echo "###############################################"
+echo "        MULTIPLE USERADD WITH SSHPASS"
 echo "		     v0.6-20.03.2019"
 echo "   Author: Gabriel Torelli | torelli@yahoo.com
-echo "##################################################"
+echo "###############################################"
 
 echo "Insert username and press [ENTER]:"
 read nome
